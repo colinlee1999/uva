@@ -4,6 +4,6 @@
     "version": "0.1.0",
     "command": "g++",
     "isShellCommand": true,
-    "args": ["-o", "intermediate.out", "-g", "${file}"],
+    "args": ["-o", "intermediate.out", "-g", "${file}", "-std=c++11"],
     "showOutput": "always"
 }
