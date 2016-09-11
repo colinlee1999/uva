@@ -10,7 +10,7 @@
 #define UNREACHABLE (INT_MAX>>2)
 using namespace std;
 
-ifstream fin("week1/314_input.txt");
+ifstream fin("314_input.txt");
 #define cin fin
 
 struct ele
@@ -32,9 +32,6 @@ struct ele
 
 int main()
 {
-	int n, m;
-	cin >> n >> m;
-
 	unordered_map<string, int> orient;
 	orient["east"] = 1;
 	orient["south"] = 2;
@@ -75,14 +72,29 @@ int main()
 	forward_dir[8].push_back(pair<int, int>(-3, 0));
 
 	// cout<<"ok-1"<<endl;
+	
+	int n, m;
+	cin >> n >> m;
+	int case_count = 0;
 
 	while (n != 0 && m != 0)
 	{
+		case_count++;
+		//cout << "==============================" << endl;
+		//if (case_count == 18)
+		//	cout << n << ' ' << m << endl;
 		vector<vector<int>> atlas(n, vector<int>(m, 0));
 		// cout<<"ok-0.5"<<endl;
 		for (int i = 0; i < n; i++)
 			for (int j = 0; j < m; j++)
 				cin >> atlas[i][j];
+
+		//if (case_count == 18)
+		//{
+		//	for (int i = 0; i < n; i++, cout << endl)
+		//		for (int j = 0; j < m; j++)
+		//			cout << atlas[i][j] << ' ';
+		//}
 
 		// cout<<"ok0"<<endl;
 		
@@ -97,6 +109,15 @@ int main()
 			for (int j = 1; j<m; j++)
 				reachable[i][j] = !(atlas[i][j] || atlas[i-1][j] || atlas[i][j-1] || atlas[i-1][j-1]);
 
+		//if (case_count == 18)
+		//{
+		//	cout << "+++++++++++++++++++++++++++++++++" << endl;
+		//	for (int i = 0; i < n; i++, cout << endl)
+		//		for (int j = 0; j < m; j++)
+		//			cout << (int)reachable[i][j];
+		//	cout << "---------------------------------------------------------" << endl;
+		//}
+
 		// cout<<"ok1"<<endl;
 
 		vector<vector<int>> status(n, vector<int>(m, 0));
@@ -106,20 +127,27 @@ int main()
 		string s_orient;
 		cin >> s_row >> s_col >> e_row >> e_col >> s_orient;
 
+		//if (case_count == 18)
+		//{
+		//	cout << s_row << ' ' << s_col << ' ' << e_row << ' ' << e_col << ' ' << s_orient << endl;
+		//}
+
 		// cout<<"ok2"<<endl;
 
 		queue<ele> q;
 
 		q.push(ele(s_row, s_col, orient[s_orient], 0));
+		status[s_row][s_col] |= orient[s_orient];
 
 		//begin bfs
 
 		// cout<<"ok3"<<endl;
 
-		bool found = false;
 		int steps = -1;
+		if (s_row == e_row && s_col == e_col)
+			steps = 0;
 
-		while (!q.empty() && !found)
+		while (!q.empty() && steps<0)
 		{
 			ele cur = q.front();
 			q.pop();
@@ -152,17 +180,16 @@ int main()
 			{
 				int next_row = row + it.first;
 				int next_col = col + it.second;
-				if (next_row < 0) break;
+				if (next_row <= 0) break;
 				if (next_row >= n) break;
-				if (next_col < 0) break;
+				if (next_col <= 0) break;
 				if (next_col >= m) break;
 				if (!reachable[next_row][next_col]) break;
 				if (!(status[next_row][next_col] & ori))
 				{
-					if (next_row == e_row && next_col == col)
+					if (next_row == e_row && next_col == e_col)
 					{
 						steps = step + 1;
-						found = true;
 						break;
 					}
 					q.push(ele(next_row, next_col, ori, step+1));
@@ -176,7 +203,7 @@ int main()
 		//end bfs
 
 		cout << steps << endl;
-		
+
 		cin >> n >> m;
 	}
 }
