@@ -18,7 +18,7 @@ ifstream fin("1062_input.txt");
 
 struct ele
 {
-	ele(int step, int letter)
+	ele(int pos, int letter)
 	{
 		this->pos = pos;
 		this->letter = letter;
@@ -35,6 +35,7 @@ int main()
 	int case_count = 0;
 	while (s != "end")
 	{
+		// cout<<"+++++++++++++++++++++++++"<<endl;
 		int slen = s.length();
 
 		vector<ele> buffer;
@@ -43,38 +44,64 @@ int main()
 		int prev_max = -1;
 		int v_count = 0;
 
-		buffer.push_back(ele(0, 30));
-
 		while (v_count < slen)
 		{
-			vector<ele> new_buffer();
-
-			for (auto it : buffer)
-			{
-				it.pos;
-			}
-
-
+			vector<ele> no_father;
 
 			prev_max = -1;
 			for (int i = 0; i < slen; i++)
 				if (!visited[i] && s[i] - 'A'>prev_max)
 				{
-					bool found = false;
-					for (int j = 0; j < buffer.size(); j++)
-						if (buffer[j] >= s[i])
-						{
-							buffer[j] = s[i];
-							found = true;
-							break;
-						}
-					if (!found)
-						buffer.push_back(s[i]);
+					no_father.push_back(ele(i, s[i] - 'A'));
 
 					prev_max = s[i] - 'A';
 					v_count++;
 					visited[i] = true;
 				}
+
+			int pold, pnew;
+			pold = pnew = 0;
+			vector<ele> new_buffer;
+
+			while (pold < buffer.size() && pnew < no_father.size())
+			{
+				// cout<<"pold\t"<<pold<<"\tpnew\t"<<pnew<<endl;
+				if (buffer[pold].pos >= no_father[pnew].pos)
+				{
+					new_buffer.push_back(no_father[pnew]);
+					pnew++;
+				}
+				else
+				{
+
+					if (buffer[pold].letter >= no_father[pnew].letter)
+					{
+						new_buffer.push_back(no_father[pnew]);
+						pnew++;
+						pold++;
+					}
+					else
+					{
+						new_buffer.push_back(buffer[pold++]);
+					}
+					
+				}
+			}
+
+			while (pnew < no_father.size())
+				new_buffer.push_back(no_father[pnew++]);
+
+			while (pold < buffer.size())
+				new_buffer.push_back(buffer[pold++]);
+
+			buffer.swap(new_buffer);
+
+			// cout<<"=============="<<endl;
+			// for (auto it : buffer)
+			// {
+			// 	cout<<(char)(it.letter+'A')<<' ';
+			// }
+			// cout<<endl;
 		}
 
 		int result = buffer.size();
