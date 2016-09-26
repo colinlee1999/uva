@@ -26,19 +26,24 @@ int main()
 		string s;
 		cin >> s;
 		int slen = s.length();
-		vector<vector<int> > f(slen + 1, vector<int>(slen + 1, 0));
-		for (int i = 1; i <= slen; i++)
-			f[i][0] = f[0][i] = i;
+		vector<vector<int> > f(slen, vector<int>(slen, 0));
 
-		for (int i = 1; i <= slen; i++)
-			for (int j = 1; j <= slen; j++)
+		for (int i = 1; i < slen; i++)
+			for (int j = i - 1; j >= 0; j--)
 			{
-				f[i][j] = min(f[i - 1][j], f[i][j - 1]) + 1;
-				if (s[i - 1] == s[slen - j])
-					f[i][j] = min(f[i][j], f[i - 1][j - 1]);
+				f[j][i] = min(f[j + 1][i], f[j][i - 1]) + 1; // delete or add one more
+				//f[j][i] = min(f[j][i], (i - j + 1) / 2); // change only half
+				if (s[i] == s[j]) // if first and last are equal
+					f[j][i] = min(f[j][i], f[j + 1][i - 1]);
+				else // if first and last are not equal
+					f[j][i] = min(f[j][i], f[j + 1][i - 1] + 1);
 			}
+		
+		//for (int i = 0; i < slen; i++, cout << endl)
+		//	for (int j = 0; j < slen; j++)
+		//		cout << f[j][i] << ' ';
 
 		case_count++;
-		cout << "Case " << case_count << ": " << f[slen][slen] << endl;
+		cout << "Case " << case_count << ": " << f[0][slen - 1] << endl;
 	}
 }
