@@ -57,40 +57,72 @@ int main()
 
 		int p;
 		scanf("%d", &p);
-		vector<dvd_info> dvd(p, dvd_info(0, 0));
+		vector<dvd_info> dvd; //(p, dvd_info(0, 0));
+		unordered_map<int, int> map;
+		int count = 0;
 		for (int i = 0; i < p; i++)
 		{
+			int id;
 			long long d1, d2;
-			scanf("%d %lld.%lld", &dvd[i].id_store, &d1, &d2);
-			dvd[i].gain = d1 * 100 + d2;
+			scanf("%d %lld.%lld", &id, &d1, &d2);
+			if (!map.count(id))
+			{
+				map[id] = count++;
+				dvd.push_back(dvd_info(id, d1 * 100 + d2));
+			}
+			else
+			{
+				int pos = map[id];
+				dvd[pos].gain += d1 * 100 + d2;
+			}
 		}
+
+		p = count;
 
 		vector<vector<long long> > f(p, vector<long long>((1 << (p)), INT_MIN));
 
 		for (int i = 0; i < p; i++)
-			f[i][1 << i] = - dist[dvd[i].id_store][0] + dvd[i].gain;
+			f[i][1 << i] = - dist[0][dvd[i].id_store] + dvd[i].gain;
 
 		vector< pair<int, int> > o;
-		for (int i = 0; i < (1 << (p)); i++) {
+		for (int i = 0; i < (1 << p); i++) {
 			o.push_back(make_pair(__builtin_popcount(i), i));
 		}
 		sort(o.begin(), o.end());
-		
-		for (int j = 3; j < (1 << (p)); j++)
-			for (int i = 0; i < p; i++) // to position i
-			{
-				int to = 1 << i;
-				for (int k = 0; k < p; k++) // from position k
-					if (i != k && f[k][j & (~to)] != INT_MIN)
-					{
-						int from = 1 << k;
-						if ((to & j) && (from & j)) // j contains to and from
-						{
-							f[i][j] = max(f[i][j], f[k][j & (~to)] + dvd[i].gain - dist[dvd[k].id_store][dvd[i].id_store]);
-							//f[i][j] = max(f[i][j], f[k][j] + dvd[i].gain - dist[dvd[k].id_store][dvd[i].id_store]);
-						}
-					}
+
+		for (int i = 0; i < o.size(); i++) {
+			int state = o[i].second;
+			for (int j = 0; j < dvd.size(); j++) {
+				if (f[j][state] == INT_MIN)
+					continue;
+
+				int u = dvd[j].id_store;
+				//ret = max(ret, dp[state][j] - g[u][0]);
+				for (int k = 0; k < dvd.size(); k++) {
+					if ((state >> k) & 1)
+						continue;
+					int v = dvd[k].id_store;
+					f[k][state | (1 << k)] = max(f[k][state | (1 << k)], f[j][state] - dist[u][v] + dvd[k].gain);
+				}
 			}
+		}
+
+		////for (auto it : o)
+		//for (int j = 0; j < (1 << (p)); j++)
+		//{
+		//	//int j = it.second;
+		//	for (int i = 0; i < p; i++) // to position i
+		//	{
+		//		int to = 1 << i;
+		//		for (int k = 0; k < p; k++) // from position k
+		//			if (i != k && f[k][j & (~to)] != INT_MIN)
+		//			{
+		//				int from = 1 << k;
+		//				if ((to & j) && (from & j)) // j contains to and from
+		//					f[i][j] = max(f[i][j], f[k][j & (~to)] + dvd[i].gain - dist[dvd[k].id_store][dvd[i].id_store]);
+		//			}
+		//	}
+		//}
 
 		long long result = 0;
 		for (int j = 0; j < (1 << (p)); j++)
