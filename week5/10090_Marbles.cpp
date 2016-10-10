@@ -45,7 +45,7 @@ Triple extended_euclid(long long a, long long b) {
 
 int main()
 {
-	int n, c1, c2, n1, n2;
+	long long n, c1, c2, n1, n2;
 	cin >> n;
 	while (n != 0) {
 		cin >> c1 >> n1;
@@ -57,16 +57,36 @@ int main()
 		if (n % t.d !=0) {
 			cout << "failed" << endl;
 		} else {
-			int tmp = n / t.d;
+			long long tmp = n / t.d;
 			t.x *= tmp;
 			t.y *= tmp;
+			long long m1 = lcm / n1;
+			long long m2 = lcm / n2;
 			if (t.x < 0) {
-				tmp = lcm / n2;
-				abs(t.x) / (lcm / n2)
+				long long trade_to_x = (abs(t.x) + (m1 - 1)) / m1;
+				t.x += trade_to_x * m1;
+				t.y -= trade_to_x * m2;
 			} else if (t.y < 0) {
-
+				long long trade_to_y = (abs(t.y) + (m2 - 1)) / m2;
+				t.y += trade_to_y * m2;
+				t.x -= trade_to_y * m1;
 			}
-
+			if (t.x < 0 || t.y < 0) {
+				cout << "failed" << endl;
+			} else {
+				long long cost1 = m1 * c1;
+				long long cost2 = m2 * c2;
+				if (cost1 < cost2) {
+					long long trade_to_x = t.y / m2;
+					t.x += trade_to_x * m1;
+					t.y -= trade_to_x * m2;
+				} else {
+					long long trade_to_y = t.x / m1;
+					t.y += trade_to_y * m2;
+					t.x -= trade_to_y * m1;
+				}
+				cout << t.x << ' ' << t.y << endl;
+			}
 		}
 
 		cin >> n;
