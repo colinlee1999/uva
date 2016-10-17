@@ -21,55 +21,129 @@ using namespace std;
 ifstream fin("12532_input.txt");
 #define cin fin
 
-vector<vector<long long> > mul(
-	const vector<vector<long long> > & a, 
-	const vector<vector<long long> > & b) {
-	vector<vector<long long> > r(a);
-	r[0][0] = r[0][1] = r[1][0] = r[1][1] = 0;
-	for (int i = 0; i < 2; i++)
-		for (int j = 0; j < 2; j++)
-			for (int k = 0; k < 2; k++)
-				r[i][j] += a[i][k] * b[k][j];
-	return r;
-}
-
-vector<vector<long long> > power(
-	const vector<vector<long long> > & x,
-	int n) {
-	vector<vector<long long> > s(x);
-	vector<vector<long long> > r(x);
-	r[0][0] = r[1][1] = 1;
-	r[0][1] = r[1][0] = 0;
-	while (n > 0) {
-		if (n & 1) {
-			r = mul(r, s);
-		}
-		s = mul(s, s);
-		n >>= 1;
+class SegmentTree
+{
+public:
+	int filter(int a) {
+		if (a > 0) return 1;
+		if (a < 0) return -1;
+		return 0;
 	}
-	return r;
-}
+
+	int calc(int a, int b) {
+		return a * b;
+	}
+
+	vector<int> st;
+	int unit;
+
+	SegmentTree(vector<int> & arr, int n) {
+		unit = 1;
+		int x = ceil(log(n) / log(2));
+		int max_size = 2 * (1 << x) - 1;
+		st = vector<int>(max_size, 0);
+		constructSTUtil(arr, 0, n - 1, 0);
+	}
+
+	int constructSTUtil(vector<int> & arr, int ss, int se, int si) {
+		if (ss == se) {
+			st[si] = filter(arr[ss]);
+			return st[si];
+		}
+
+		int mid = ss + (se - ss) / 2;
+		int a = constructSTUtil(arr, ss, mid, si * 2 + 1);
+		int b = constructSTUtil(arr, mid + 1, se, si * 2 + 2);
+		st[si] = calc(a, b);
+		return st[si];
+	}
+
+	int get_query(int ss, int se, int qs, int qe, int si) {
+		if (qs <= ss && qe >= se) {
+			// if (qs == 0 && qe == 3) {
+			// 	cout << "++++++++++++++" << endl;
+			// 	cout << st[si] << endl;
+			// 	cout << "--------------" << endl;
+			// }
+			return st[si];
+		}
+		if (se < qs || ss > qe)
+			return unit;
+		int mid = ss + (se - ss) / 2;
+		int a = get_query(ss, mid, qs, qe, 2 * si + 1);
+		int b = get_query(mid + 1, se, qs, qe, 2 * si + 2);
+		return calc(a, b);
+	}
+
+	int query(int n, int qs, int qe) {
+		return get_query(0, n - 1, qs, qe, 0);
+	}
+
+	int update(int ss, int se, int i, int new_number, int si) {
+		if (i < ss || i > se) {
+			return st[si];
+		}
+		if (se != ss) {
+			int mid = ss + (se - ss) / 2;
+			int a = update(ss, mid, i, new_number, 2 * si + 1);
+			int b = update(mid + 1, se, i, new_number, 2 * si + 2);
+			st[si] = calc(a, b);
+		} else {
+			st[si] = filter(new_number);
+		}
+		return st[si];
+	}
+
+	void output() {
+		for (auto it : st) {
+			cout << it << ' ';
+		}
+		cout << endl;
+	}
+};
 
 int main()
 {
-	long long p, q, n;
-	cin >> p >> q;
-	while (cin >> n) {
-		if (n == 0) {
-			cout << 2 << endl;			
+	int n, k;
+	while (cin >> n >> k) {
+		vector<int> a(n, 0);
+		for (int i = 0; i < n; i++)
+			cin >> a[i];
+		SegmentTree tree(a, n);
+		string s;
+		int l, r;
+		for (int i = 0; i < k; i++) {
+			// tree.output();
+			cin >> s >> l >> r;
+			switch (s[0]) {
+				case 'C':
+					tree.update(0, n - 1, l - 1, r, 0);
+					break;
+				case 'P':
+				{
+					int tmp = tree.get_query(0, n - 1, l - 1, r - 1, 0);
+					// printf("tmp: %d\n", tmp);
+					string ts;
+					switch (tmp) {
+						case 1:
+							ts = "+";
+							break;
+						case -1:
+							ts = "-";
+							break;
+						case 0:
+							ts = "0";
+						default:
+							break;
+					}
+					// cout << '[' << ts << ']';
+					cout << ts;
+				}
+					break;
+				default:
+					break;
+			}
 		}
-		else {
-			vector<vector<long long> > mat(2, vector<long long>(2, 0));
-			mat[0][0] = 0;
-			mat[0][1] = 1;
-			mat[1][0] = -q;
-			mat[1][1] = p;
-			mat = power(mat, n - 1);
-			long long S0 = 2;
-			long long S1 = p;
-			long long result = mat[1][0] * S0 + mat[1][1] * S1;
-			cout << result << endl;
-		}
-		cin >> p >> q;
+		cout << endl;
 	}
 }
