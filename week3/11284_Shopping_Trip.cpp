@@ -9,130 +9,102 @@
 #include <cstdio>
 #define INT_MIN (1<<31)
 #define INT_MAX (~INT_MIN)
-#define UNREACHABLE (INT_MAX>>2)
+#define UNREACHABLE (INT_MAX>>1)
 #define INF (1e300)
 #define eps (1e-9)
 using namespace std;
 
-ifstream fin("11284_input.txt");
-//#define cin fin
+// #define VD vector<double>
+// #define VVD vector<VD>
+#define VI vector<int>
+#define VVI vector<VI>
 
-struct dvd_info
-{
-	dvd_info(int id_store, long long gain)
-	{
-		this->id_store = id_store;
-		this->gain = gain;
-	}
-
-	int id_store;
-	long long gain;
-};
+#define pos(i) (1 << i)
+#define unmark(s, to) (s & (~to))
 
 int main()
 {
 	int tttt;
 	scanf("%d", &tttt);
-	while (tttt--)
-	{
-		int n, m;
-		scanf("%d %d", &n, &m);
-		vector<vector<long long> > dist(n + 1, vector<long long>(n + 1, INT_MAX));
-		for (int i = 0; i < m; i++)
-		{
-			int s, t;
-			long long d1, d2;
-			scanf("%d %d %lld.%lld", &s, &t, &d1, &d2);
-			// cout << "debug:\t" << d1 << d2 << endl;
-			dist[s][t] = dist[t][s] = d1 * 100 + d2;
+	int N, M, P;
+	while (tttt--) {
+		scanf("%d %d", &N, &M);
+		// VVD graph(N + 1, VD(N + 1, INF));
+		VVI graph(N + 1, VI(N + 1, UNREACHABLE));
+		for (int i = 0; i < M; i++) {
+			int a, b;
+			int c, d;
+			scanf("%d %d %d.%d", &a, &b, &c, &d);
+			graph[a][b] = graph[b][a] = min(graph[a][b], c * 100 + d);
 		}
+		// floyd
+		for (int i = 0; i <= N; i++) {
+			graph[i][i] = 0;
+		}
+		for (int k = 0; k <= N; k++)
+			for (int i = 0; i <= N; i++)
+				for (int j = 0; j <= N; j++)
+					graph[i][j] = min(graph[i][j], graph[i][k] + graph[k][j]);
+
+		// for (int i = 0; i <= N; i++, printf("\n"))
+		// 	for (int j = 0; j <= N; j++) {
+		// 		printf("%.2f ", graph[i][j]);
+		// 	}
+
+		scanf("%d", &P);
+		VI value(N + 1, 0);
+		for (int i = 0; i < P; i++) {
+			int a;
+			int c, d;
+			scanf("%d %d.%d", &a, &c, &d);
+			value[a] += 100 * c + d;
+		}
+		VI node;
+		for (int i = 0; i <= N; i++)
+			if (value[i] > 0) {
+				node.push_back(i);
+			}
+		P = node.size();
 		
-		for (int i = 0; i <= n; i++)
-			dist[i][i] = 0;
+		// for (int i = 0; i <= N; i++) {
+		// 	printf("value %d: %.2f\n", i, value[i]);
+		// }
 
-		for (int k = 0; k <= n; k++)
-			for (int i = 0; i <= n; i++)
-				for (int j = 0; j <= n; j++)
-					dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j]);
+		// for (auto it : node) {
+		// 	printf("%d ", it);
+		// }
+		// printf("\n");
 
-		int p;
-		scanf("%d", &p);
-		vector<dvd_info> dvd; //(p, dvd_info(0, 0));
-		unordered_map<int, int> map;
-		int count = 0;
-		for (int i = 0; i < p; i++)
-		{
-			int id;
-			long long d1, d2;
-			scanf("%d %lld.%lld", &id, &d1, &d2);
-			if (!map.count(id))
-			{
-				map[id] = count++;
-				dvd.push_back(dvd_info(id, d1 * 100 + d2));
-			}
-			else
-			{
-				int pos = map[id];
-				dvd[pos].gain += d1 * 100 + d2;
-			}
+		int status_max = 1 << P;
+		VVI f(P, VI(status_max, INT_MIN));
+		for (int i = 0; i < P; i++) {
+			f[i][pos(i)] = -graph[0][node[i]] + value[node[i]];
 		}
 
-		p = count;
+		for (int s = 3; s < status_max; s++)
+			for (int i = 0; i < P; i++)
+				for (int j = 0; j < P; j++) {
+					if (i == j) continue;
+					int to = pos(i);
+					int from = pos(j);
+					if ((s & to) && (s & from)) {
+						int fs = unmark(s, to);
+						f[i][s] = max(f[i][s], f[j][fs] - graph[node[j]][node[i]] + value[node[i]]);
+					}
+				}
 
-		vector<vector<long long> > f(p, vector<long long>((1 << (p)), INT_MIN));
-
-		for (int i = 0; i < p; i++)
-			f[i][1 << i] = - dist[0][dvd[i].id_store] + dvd[i].gain;
-
-		vector< pair<int, int> > o;
-		for (int i = 0; i < (1 << p); i++) {
-			o.push_back(make_pair(__builtin_popcount(i), i));
-		}
-		sort(o.begin(), o.end());
-
-		for (int i = 0; i < o.size(); i++) {
-			int state = o[i].second;
-			for (int j = 0; j < dvd.size(); j++) {
-				if (f[j][state] == INT_MIN)
-					continue;
-
-				int u = dvd[j].id_store;
-				//ret = max(ret, dp[state][j] - g[u][0]);
-				for (int k = 0; k < dvd.size(); k++) {
-					if ((state >> k) & 1)
-						continue;
-					int v = dvd[k].id_store;
-					f[k][state | (1 << k)] = max(f[k][state | (1 << k)], f[j][state] - dist[u][v] + dvd[k].gain);
+		int result = 0;
+		for (int s = 1; s < status_max; s++)
+			for (int i = 0; i < P; i++) {
+				int to = pos(i);
+				if (s & to) {
+					result = max(result, f[i][s] - graph[node[i]][0]);
 				}
 			}
-		}
-
-		////for (auto it : o)
-		//for (int j = 0; j < (1 << (p)); j++)
-		//{
-		//	//int j = it.second;
-		//	for (int i = 0; i < p; i++) // to position i
-		//	{
-		//		int to = 1 << i;
-		//		for (int k = 0; k < p; k++) // from position k
-		//			if (i != k && f[k][j & (~to)] != INT_MIN)
-		//			{
-		//				int from = 1 << k;
-		//				if ((to & j) && (from & j)) // j contains to and from
-		//					f[i][j] = max(f[i][j], f[k][j & (~to)] + dvd[i].gain - dist[dvd[k].id_store][dvd[i].id_store]);
-		//			}
-		//	}
-		//}
-
-		long long result = 0;
-		for (int j = 0; j < (1 << (p)); j++)
-			for (int i = 0; i < p; i++)
-				if (f[i][j] != INT_MIN)
-					result = max(result, f[i][j] - dist[dvd[i].id_store][0]);
-
-		if (result <= 0)
+		if (result <= 0) {
 			printf("Don't leave the house\n");
-		else
-			printf("Daniel can save $%lld.%02lld\n", result / 100, result % 100);
+		} else {
+			printf("Daniel can save $%d.%02d\n", result / 100, result % 100);
+		}
 	}
 }
